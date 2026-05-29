@@ -1,4 +1,12 @@
 import { useState, useEffect } from 'react';
+import {
+  Search as CarbonSearch,
+  Checkbox,
+  Tag,
+  Grid,
+  Column,
+} from '@carbon/react';
+import { Filter } from '@carbon/icons-react';
 import type { Flight, FlightWithClass, SeatClass } from '../types';
 import { LoadingSpinner } from '../components/common';
 import { FlightCard } from '../components/flights/FlightCard';
@@ -7,9 +15,7 @@ import { BookingModal } from '../components/bookings/BookingModal';
 import { getFlights } from '../services/api';
 import { useUser } from '../hooks/useUser';
 import { expandFlightByClass } from '../utils/seatClass';
-import { Search, Filter } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { motion } from 'framer-motion';
 
 export const Flights = () => {
   const { user } = useUser();
@@ -106,135 +112,104 @@ export const Flights = () => {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center"
-      >
-        <h1 className="text-4xl md:text-5xl font-bold text-star-white mb-4">
-          Available <span className="bg-cosmic-gradient bg-clip-text text-transparent">Flights</span>
-        </h1>
-        <p className="text-star-white/70 text-lg">
-          Choose your destination and embark on an interplanetary adventure
-        </p>
-      </motion.div>
+    <div style={{ paddingTop: '2rem', paddingBottom: '2rem' }}>
+      <Grid>
+        <Column sm={4} md={8} lg={16}>
+          {/* Header */}
+          <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+            <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+              Available Flights
+            </h1>
+            <p style={{ fontSize: '1.125rem', opacity: 0.8 }}>
+              Choose your destination and embark on an interplanetary adventure
+            </p>
+          </div>
 
-      {/* Search and Filters */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="glass-card p-6"
-      >
-        <div className="space-y-4">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-star-white/50" size={20} />
-            <input
-              type="text"
+          {/* Search and Filters */}
+          <div style={{ marginBottom: '2rem' }}>
+            <CarbonSearch
+              labelText="Search flights"
               placeholder="Search by origin or destination..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-star-white placeholder-star-white/50 focus:outline-none focus:ring-2 focus:ring-cosmic-purple"
+              size="lg"
+              style={{ marginBottom: '1.5rem' }}
             />
-          </div>
 
-          {/* Class Filters */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 text-star-white/70">
-              <Filter size={20} />
-              <span className="text-sm font-medium">Class:</span>
+            {/* Class Filters */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Filter size={20} />
+                <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>Class:</span>
+              </div>
+              <Tag
+                type={classFilter === 'all' ? 'purple' : 'gray'}
+                onClick={() => setClassFilter('all')}
+                style={{ cursor: 'pointer' }}
+              >
+                All Classes
+              </Tag>
+              <Tag
+                type={classFilter === 'economy' ? 'blue' : 'gray'}
+                onClick={() => setClassFilter('economy')}
+                style={{ cursor: 'pointer' }}
+              >
+                Economy
+              </Tag>
+              <Tag
+                type={classFilter === 'business' ? 'purple' : 'gray'}
+                onClick={() => setClassFilter('business')}
+                style={{ cursor: 'pointer' }}
+              >
+                Business
+              </Tag>
+              <Tag
+                type={classFilter === 'galaxium' ? 'magenta' : 'gray'}
+                onClick={() => setClassFilter('galaxium')}
+                style={{ cursor: 'pointer' }}
+              >
+                Galaxium
+              </Tag>
+
+              <div style={{ marginLeft: 'auto' }}>
+                <Checkbox
+                  id="show-sold-out"
+                  labelText="Show sold out"
+                  checked={showSoldOut}
+                  onChange={(e) => setShowSoldOut(e.target.checked)}
+                />
+              </div>
             </div>
-            <button
-              onClick={() => setClassFilter('all')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                classFilter === 'all'
-                  ? 'bg-cosmic-purple text-white'
-                  : 'bg-white/5 text-star-white/70 hover:bg-white/10'
-              }`}
-            >
-              All Classes
-            </button>
-            <button
-              onClick={() => setClassFilter('economy')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                classFilter === 'economy'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-white/5 text-star-white/70 hover:bg-white/10'
-              }`}
-            >
-              Economy
-            </button>
-            <button
-              onClick={() => setClassFilter('business')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                classFilter === 'business'
-                  ? 'bg-purple-500 text-white'
-                  : 'bg-white/5 text-star-white/70 hover:bg-white/10'
-              }`}
-            >
-              Business
-            </button>
-            <button
-              onClick={() => setClassFilter('galaxium')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                classFilter === 'galaxium'
-                  ? 'bg-yellow-500 text-white'
-                  : 'bg-white/5 text-star-white/70 hover:bg-white/10'
-              }`}
-            >
-              Galaxium
-            </button>
 
-            <label className="flex items-center gap-2 text-star-white/70 ml-auto">
-              <input
-                type="checkbox"
-                checked={showSoldOut}
-                onChange={(e) => setShowSoldOut(e.target.checked)}
-                className="rounded"
-              />
-              <span className="text-sm">Show sold out</span>
-            </label>
+            {/* Results count */}
+            <div style={{ fontSize: '0.875rem', opacity: 0.8 }}>
+              Showing {filteredFlights.length} of {expandedFlights.length} options
+            </div>
           </div>
 
-          {/* Results count */}
-          <div className="text-star-white/70 text-sm">
-            Showing {filteredFlights.length} of {expandedFlights.length} options
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Flights Grid */}
-      {isLoading ? (
-        <LoadingSpinner size="lg" text="Loading flights..." />
-      ) : filteredFlights.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center py-12"
-        >
-          <p className="text-star-white/70 text-lg">
-            {searchTerm ? 'No flights found matching your search' : 'No flights available'}
-          </p>
-        </motion.div>
-      ) : (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          {filteredFlights.map((fw, index) => (
-            <FlightCard
-              key={`${fw.flight.flight_id}-${fw.seatClass}-${index}`}
-              flightWithClass={fw}
-              onBook={handleBookFlight}
-            />
-          ))}
-        </motion.div>
-      )}
+          {/* Flights Grid */}
+          {isLoading ? (
+            <LoadingSpinner size="lg" text="Loading flights..." />
+          ) : filteredFlights.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '3rem 0' }}>
+              <p style={{ fontSize: '1.125rem', opacity: 0.8 }}>
+                {searchTerm ? 'No flights found matching your search' : 'No flights available'}
+              </p>
+            </div>
+          ) : (
+            <Grid narrow style={{ marginTop: '1.5rem' }}>
+              {filteredFlights.map((fw, index) => (
+                <Column key={`${fw.flight.flight_id}-${fw.seatClass}-${index}`} sm={4} md={4} lg={5}>
+                  <FlightCard
+                    flightWithClass={fw}
+                    onBook={handleBookFlight}
+                  />
+                </Column>
+              ))}
+            </Grid>
+          )}
+        </Column>
+      </Grid>
 
       {/* User Identification Modal */}
       <UserIdentification

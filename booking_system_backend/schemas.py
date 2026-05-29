@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, model_validator
 from typing import Optional
 
 
@@ -30,6 +30,14 @@ class BookingRequest(BaseModel):
     name: str
     flight_id: int
     seat_class: str  # 'economy', 'business', or 'galaxium'
+    includes_infant: bool = False
+    infant_name: Optional[str] = None
+
+    @model_validator(mode='after')
+    def validate_infant_name(self):
+        if self.includes_infant and not (self.infant_name and self.infant_name.strip()):
+            raise ValueError('infant_name is required when traveling with a lap infant')
+        return self
 
 
 class BookingOut(BaseModel):
@@ -38,6 +46,9 @@ class BookingOut(BaseModel):
     flight_id: int
     seat_class: str
     price_paid: int
+    includes_infant: bool
+    infant_name: Optional[str] = None
+    infant_fee: int
     status: str
     booking_time: str
 

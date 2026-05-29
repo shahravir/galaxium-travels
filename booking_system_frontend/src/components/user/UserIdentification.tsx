@@ -1,5 +1,13 @@
 import { useState } from 'react';
-import { Modal, Input, Button } from '../common';
+import {
+  ComposedModal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  TextInput,
+  Stack,
+} from '@carbon/react';
+import { Button } from '../common';
 import { getUserByCredentials, registerUser, isErrorResponse } from '../../services/api';
 import { useUser } from '../../hooks/useUser';
 import toast from 'react-hot-toast';
@@ -83,54 +91,61 @@ const validateEmail = (email: string) => {
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
+    <ComposedModal
+      open={isOpen}
       onClose={handleClose}
-      title={isNewUser ? 'Create Account' : 'Sign In'}
       size="sm"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <p className="text-star-white/70 text-sm mb-4">
+      <ModalHeader title={isNewUser ? 'Create Account' : 'Sign In'} />
+      <ModalBody>
+        <form onSubmit={handleSubmit}>
+          <Stack gap={5}>
+            <p style={{ fontSize: '0.875rem', opacity: 0.8 }}>
+              {isNewUser
+                ? 'Create an account to book your flight'
+                : 'Enter your name and email to continue'}
+            </p>
+
+            <TextInput
+              id="user-name"
+              labelText="Name"
+              type="text"
+              placeholder="John Doe"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+
+            <TextInput
+              id="user-email"
+              labelText="Email"
+              type="email"
+              placeholder="john@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </Stack>
+        </form>
+      </ModalBody>
+      <ModalFooter>
+        <Button
+          variant="secondary"
+          onClick={() => setIsNewUser(!isNewUser)}
+        >
           {isNewUser
-            ? 'Create an account to book your flight'
-            : 'Enter your name and email to continue'}
-        </p>
-
-        <Input
-          label="Name"
-          type="text"
-          placeholder="John Doe"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-
-        <Input
-          label="Email"
-          type="email"
-          placeholder="john@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-
-        <div className="flex flex-col gap-3 pt-4">
-          <Button type="submit" isLoading={isLoading} className="w-full">
-            {isNewUser ? 'Create Account' : 'Continue'}
-          </Button>
-
-          <button
-            type="button"
-            onClick={() => setIsNewUser(!isNewUser)}
-            className="text-sm text-cosmic-purple hover:text-nebula-pink transition-colors"
-          >
-            {isNewUser
-              ? 'Already have an account? Sign in'
-              : "Don't have an account? Register"}
-          </button>
-        </div>
-      </form>
-    </Modal>
+            ? 'Already have an account? Sign in'
+            : "Don't have an account? Register"}
+        </Button>
+        <Button
+          type="submit"
+          isLoading={isLoading}
+          onClick={handleSubmit}
+        >
+          {isNewUser ? 'Create Account' : 'Continue'}
+        </Button>
+      </ModalFooter>
+    </ComposedModal>
   );
 };
 

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Grid, Column, Content } from '@carbon/react';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { Starfield } from '../common/Starfield';
@@ -10,7 +11,7 @@ interface LayoutProps {
 
 export const Layout = ({ children }: LayoutProps) => {
   return (
-    <div className="min-h-screen flex flex-col relative">
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       {/* Animated starfield background */}
       <Starfield />
       
@@ -44,11 +45,13 @@ export const Layout = ({ children }: LayoutProps) => {
       <Header />
       
       {/* Main content */}
-      <main className="relative z-10 flex-1 pt-24 pb-8">
-        <div className="container mx-auto px-4">
-          {children}
-        </div>
-      </main>
+      <Content style={{ position: 'relative', zIndex: 10, flex: 1 }}>
+        <Grid>
+          <Column sm={4} md={8} lg={16}>
+            {children}
+          </Column>
+        </Grid>
+      </Content>
       
       {/* Footer */}
       <Footer />

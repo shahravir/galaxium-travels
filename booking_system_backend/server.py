@@ -28,20 +28,31 @@ def list_flights() -> list[FlightOut]:
 
 
 @mcp.tool()
-def book_flight(user_id: int, name: str, flight_id: int, seat_class: str) -> BookingOut:
+def book_flight(
+    user_id: int,
+    name: str,
+    flight_id: int,
+    seat_class: str,
+    includes_infant: bool = False,
+    infant_name: str | None = None,
+) -> BookingOut:
     """Book a seat on a specific flight for a user in the specified class.
-    
+
     Args:
         user_id: The ID of the user making the booking
         name: The name of the user (must match registered name)
         flight_id: The ID of the flight to book
         seat_class: The seat class to book ('economy', 'business', or 'galaxium')
-    
-    Decrements available seats for the specified class if successful.
+        includes_infant: Whether a lap infant is traveling with the adult (no extra seat)
+        infant_name: Required when includes_infant is True
+
+    Lap infants pay 10% of the seat class fare and do not consume an additional seat.
     Returns booking details or raises an error if booking is not possible."""
     db = SessionLocal()
     try:
-        result = booking.book_flight(db, user_id, name, flight_id, seat_class)
+        result = booking.book_flight(
+            db, user_id, name, flight_id, seat_class, includes_infant, infant_name
+        )
         if isinstance(result, ErrorResponse):
             raise Exception(result.details or result.error)
         return result
@@ -154,7 +165,15 @@ def book_flight_endpoint(request: BookingRequest, db: Session = Depends(get_db))
 
     Requires user_id, name, flight_id, and seat_class. Decrements available seats for the specified class if successful.
     """
-    return booking.book_flight(db, request.user_id, request.name, request.flight_id, request.seat_class)
+    return booking.book_flight(
+        db,
+        request.user_id,
+        request.name,
+        request.flight_id,
+        request.seat_class,
+        request.includes_infant,
+        request.infant_name,
+    )
 
 
 @app.get("/bookings/{user_id}", response_model=list[BookingOut], tags=["Bookings"])

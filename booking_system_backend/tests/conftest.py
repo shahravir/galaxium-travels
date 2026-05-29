@@ -9,8 +9,40 @@ from sqlalchemy.pool import StaticPool
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from models import Base
+from models import Base, Flight, Booking
 from db import SessionLocal
+
+
+def make_flight(**overrides) -> Flight:
+    data = {
+        "origin": "Earth",
+        "destination": "Mars",
+        "departure_time": "2099-01-01T09:00:00Z",
+        "arrival_time": "2099-01-01T17:00:00Z",
+        "economy_price": 1_000_000,
+        "economy_seats_available": 5,
+        "business_price": 2_000_000,
+        "business_seats_available": 3,
+        "galaxium_price": 3_000_000,
+        "galaxium_seats_available": 1,
+    }
+    data.update(overrides)
+    return Flight(**data)
+
+
+def make_booking(user_id: int, flight_id: int, **overrides) -> Booking:
+    data = {
+        "user_id": user_id,
+        "flight_id": flight_id,
+        "seat_class": "economy",
+        "price_paid": 1_000_000,
+        "includes_infant": False,
+        "infant_fee": 0,
+        "status": "booked",
+        "booking_time": "2099-01-01T10:00:00Z",
+    }
+    data.update(overrides)
+    return Booking(**data)
 
 # Create in-memory SQLite database for testing
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -78,14 +110,18 @@ def sample_user_data():
 
 @pytest.fixture
 def sample_flight_data():
-    """Sample flight data for testing."""
+    """Sample flight data for testing (per seat class)."""
     return {
         "origin": "Earth",
         "destination": "Mars",
         "departure_time": "2099-01-01T09:00:00Z",
         "arrival_time": "2099-01-01T17:00:00Z",
-        "price": 1000000,
-        "seats_available": 5
+        "economy_price": 1_000_000,
+        "economy_seats_available": 5,
+        "business_price": 2_000_000,
+        "business_seats_available": 3,
+        "galaxium_price": 3_000_000,
+        "galaxium_seats_available": 1,
     }
 
 
@@ -95,5 +131,6 @@ def sample_booking_data():
     return {
         "user_id": 1,
         "name": "Test User",
-        "flight_id": 1
+        "flight_id": 1,
+        "seat_class": "economy",
     }

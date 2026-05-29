@@ -5,6 +5,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from models import User, Flight, Booking
+from tests.conftest import make_flight, make_booking
 
 
 class TestFlightsEndpoint:
@@ -18,14 +19,7 @@ class TestFlightsEndpoint:
 
     def test_get_flights_with_data(self, client, db_session):
         """Test getting flights with data."""
-        db_session.add(Flight(
-            origin="Earth",
-            destination="Mars",
-            departure_time="2099-01-01T09:00:00Z",
-            arrival_time="2099-01-01T17:00:00Z",
-            price=1000000,
-            seats_available=5
-        ))
+        db_session.add(make_flight())
         db_session.commit()
 
         response = client.get("/flights")
@@ -89,6 +83,31 @@ class TestUserEndpoint:
 class TestBookEndpoint:
     """Test /book endpoint."""
 
+    def test_book_flight_with_infant(self, client, db_session, sample_user_data):
+        """Test booking with a lap infant via REST."""
+        user_response = client.post("/register", json=sample_user_data)
+        user_id = user_response.json()["user_id"]
+
+        db_session.add(make_flight())
+        db_session.commit()
+        flight = db_session.query(Flight).first()
+
+        response = client.post("/book", json={
+            "user_id": user_id,
+            "name": sample_user_data["name"],
+            "flight_id": flight.flight_id,
+            "seat_class": "economy",
+            "includes_infant": True,
+            "infant_name": "Stellar Baby",
+        })
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["includes_infant"] is True
+        assert data["infant_name"] == "Stellar Baby"
+        assert data["infant_fee"] == 100_000
+        assert data["price_paid"] == 1_100_000
+
     def test_book_flight_success(self, client, db_session, sample_user_data):
         """Test successful flight booking."""
         # Register user
@@ -96,14 +115,7 @@ class TestBookEndpoint:
         user_id = user_response.json()["user_id"]
 
         # Create flight
-        db_session.add(Flight(
-            origin="Earth",
-            destination="Mars",
-            departure_time="2099-01-01T09:00:00Z",
-            arrival_time="2099-01-01T17:00:00Z",
-            price=1000000,
-            seats_available=5
-        ))
+        db_session.add(make_flight())
         db_session.commit()
         flight = db_session.query(Flight).first()
 
@@ -111,7 +123,8 @@ class TestBookEndpoint:
         response = client.post("/book", json={
             "user_id": user_id,
             "name": sample_user_data["name"],
-            "flight_id": flight.flight_id
+            "flight_id": flight.flight_id,
+            "seat_class": "economy",
         })
 
         assert response.status_code == 200
@@ -127,7 +140,8 @@ class TestBookEndpoint:
         response = client.post("/book", json={
             "user_id": user_id,
             "name": sample_user_data["name"],
-            "flight_id": 999
+            "flight_id": 999,
+            "seat_class": "economy",
         })
 
         assert response.status_code == 200
@@ -146,23 +160,11 @@ class TestBookingsEndpoint:
         user_id = user_response.json()["user_id"]
 
         # Create flight and booking
-        db_session.add(Flight(
-            origin="Earth",
-            destination="Mars",
-            departure_time="2099-01-01T09:00:00Z",
-            arrival_time="2099-01-01T17:00:00Z",
-            price=1000000,
-            seats_available=5
-        ))
+        db_session.add(make_flight())
         db_session.commit()
         flight = db_session.query(Flight).first()
 
-        db_session.add(Booking(
-            user_id=user_id,
-            flight_id=flight.flight_id,
-            status="booked",
-            booking_time="2099-01-01T10:00:00Z"
-        ))
+        db_session.add(make_booking(user_id, flight.flight_id))
         db_session.commit()
 
         response = client.get(f"/bookings/{user_id}")
@@ -188,23 +190,11 @@ class TestCancelEndpoint:
         user_id = user_response.json()["user_id"]
 
         # Create flight and booking
-        db_session.add(Flight(
-            origin="Earth",
-            destination="Mars",
-            departure_time="2099-01-01T09:00:00Z",
-            arrival_time="2099-01-01T17:00:00Z",
-            price=1000000,
-            seats_available=4
-        ))
+        db_session.add(make_flight(economy_seats_available=4))
         db_session.commit()
         flight = db_session.query(Flight).first()
 
-        db_session.add(Booking(
-            user_id=user_id,
-            flight_id=flight.flight_id,
-            status="booked",
-            booking_time="2099-01-01T10:00:00Z"
-        ))
+        db_session.add(make_booking(user_id, flight.flight_id))
         db_session.commit()
         booking = db_session.query(Booking).first()
 

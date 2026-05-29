@@ -3,19 +3,40 @@ from datetime import datetime
 from models import User, Flight, Booking
 from schemas import BookingOut, ErrorResponse
 
+VALID_SEAT_CLASSES = ('economy', 'business', 'galaxium')
+INFANT_FARE_RATE = 0.10  # Lap infant pays 10% of the adult seat fare
 
-def book_flight(db: Session, user_id: int, name: str, flight_id: int, seat_class: str) -> BookingOut | ErrorResponse:
+
+def calculate_infant_fee(seat_price: int) -> int:
+    """Lap infant fare is 10% of the adult seat price for the selected class."""
+    return int(seat_price * INFANT_FARE_RATE)
+
+
+def book_flight(
+    db: Session,
+    user_id: int,
+    name: str,
+    flight_id: int,
+    seat_class: str,
+    includes_infant: bool = False,
+    infant_name: str | None = None,
+) -> BookingOut | ErrorResponse:
     """Book a seat on a specific flight for a user in the specified class."""
-    
-    # Validate seat_class
-    if seat_class not in ['economy', 'business', 'galaxium']:
+
+    if seat_class not in VALID_SEAT_CLASSES:
         return ErrorResponse(
             error="Invalid seat class",
             error_code="INVALID_SEAT_CLASS",
             details=f"Seat class must be 'economy', 'business', or 'galaxium'. Got: '{seat_class}'"
         )
-    
-    # Check flight exists
+
+    if includes_infant and not (infant_name and infant_name.strip()):
+        return ErrorResponse(
+            error="Infant name required",
+            error_code="INFANT_NAME_REQUIRED",
+            details="A lap infant must have a name on the booking."
+        )
+
     flight = db.query(Flight).filter(Flight.flight_id == flight_id).first()
     if not flight:
         return ErrorResponse(
@@ -23,22 +44,20 @@ def book_flight(db: Session, user_id: int, name: str, flight_id: int, seat_class
             error_code="FLIGHT_NOT_FOUND",
             details=f"The specified flight_id {flight_id} does not exist in our system. Please check the flight_id or use list_flights to see available flights."
         )
-    
-    # Check seats available for the specific class
+
     seats_field = f"{seat_class}_seats_available"
     price_field = f"{seat_class}_price"
-    
+
     seats_available = getattr(flight, seats_field)
     price = getattr(flight, price_field)
-    
+
     if seats_available < 1:
         return ErrorResponse(
             error=f"No {seat_class} seats available",
             error_code="NO_SEATS_AVAILABLE",
             details=f"The flight has no available {seat_class} class seats. Please try a different class or flight."
         )
-    
-    # Check user exists and name matches
+
     user = db.query(User).filter(User.user_id == user_id, User.name == name).first()
     if not user:
         existing_user = db.query(User).filter(User.user_id == user_id).first()
@@ -48,22 +67,25 @@ def book_flight(db: Session, user_id: int, name: str, flight_id: int, seat_class
                 error_code="NAME_MISMATCH",
                 details=f"User ID {user_id} exists but the name '{name}' does not match the registered name '{existing_user.name}'. Please verify the user's name or use the correct name for this user ID."
             )
-        else:
-            return ErrorResponse(
-                error="User not found",
-                error_code="USER_NOT_FOUND",
-                details=f"User with ID {user_id} is not registered in our system. The user might need to register first, or you may need to check if the user_id is correct."
-            )
-    
-    # Decrement seats for the specific class
+        return ErrorResponse(
+            error="User not found",
+            error_code="USER_NOT_FOUND",
+            details=f"User with ID {user_id} is not registered in our system. The user might need to register first, or you may need to check if the user_id is correct."
+        )
+
+    infant_fee = calculate_infant_fee(price) if includes_infant else 0
+    total_price = price + infant_fee
+
     setattr(flight, seats_field, seats_available - 1)
-    
-    # Create booking with seat class and price
+
     new_booking = Booking(
         user_id=user_id,
         flight_id=flight_id,
         seat_class=seat_class,
-        price_paid=price,
+        price_paid=total_price,
+        includes_infant=includes_infant,
+        infant_name=infant_name.strip() if includes_infant and infant_name else None,
+        infant_fee=infant_fee,
         status="booked",
         booking_time=datetime.utcnow().isoformat()
     )
@@ -90,7 +112,6 @@ def cancel_booking(db: Session, booking_id: int) -> BookingOut | ErrorResponse:
             details=f"Booking {booking_id} is already cancelled and cannot be cancelled again. The booking status is currently '{booking.status}'. If you need to make changes, please contact support."
         )
 
-    # Restore seat to the correct class
     flight = db.query(Flight).filter(Flight.flight_id == booking.flight_id).first()
     if flight:
         seats_field = f"{booking.seat_class}_seats_available"

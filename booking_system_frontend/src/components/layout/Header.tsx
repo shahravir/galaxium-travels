@@ -1,8 +1,16 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Rocket, User, LogOut } from 'lucide-react';
+import {
+  Header as CarbonHeader,
+  HeaderContainer,
+  HeaderName,
+  HeaderNavigation,
+  HeaderMenuItem,
+  HeaderGlobalBar,
+  HeaderGlobalAction,
+  SkipToContent,
+} from '@carbon/react';
+import { Rocket, User, Logout } from '@carbon/icons-react';
 import { useUser } from '../../hooks/useUser';
-import { Button } from '../common';
-import { motion } from 'framer-motion';
 
 export const Header = () => {
   const location = useLocation();
@@ -11,121 +19,72 @@ export const Header = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-30 glass-card border-b border-white/10">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
-            <motion.div
-              whileHover={{ rotate: 15 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Rocket className="text-cosmic-purple" size={32} />
-            </motion.div>
-            <span className="text-2xl font-bold bg-cosmic-gradient bg-clip-text text-transparent">
-              Galaxium Travels
-            </span>
-          </Link>
-
-          {/* Navigation */}
-          <nav className="hidden md:flex items-center gap-6">
-            <Link
+    <HeaderContainer
+      render={() => (
+        <CarbonHeader aria-label="Galaxium Travels">
+          <SkipToContent />
+          <HeaderName as={Link} to="/" prefix="">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Rocket size={24} />
+              <span>Galaxium Travels</span>
+            </div>
+          </HeaderName>
+          <HeaderNavigation aria-label="Galaxium Travels">
+            <HeaderMenuItem
+              as={Link}
               to="/"
-              className={`text-sm font-medium transition-colors ${
-                isActive('/')
-                  ? 'text-cosmic-purple'
-                  : 'text-star-white/70 hover:text-star-white'
-              }`}
+              isActive={isActive('/')}
             >
               Home
-            </Link>
-            <Link
+            </HeaderMenuItem>
+            <HeaderMenuItem
+              as={Link}
               to="/flights"
-              className={`text-sm font-medium transition-colors ${
-                isActive('/flights')
-                  ? 'text-cosmic-purple'
-                  : 'text-star-white/70 hover:text-star-white'
-              }`}
+              isActive={isActive('/flights')}
             >
               Flights
-            </Link>
+            </HeaderMenuItem>
             {user && (
-              <Link
+              <HeaderMenuItem
+                as={Link}
                 to="/bookings"
-                className={`text-sm font-medium transition-colors ${
-                  isActive('/bookings')
-                    ? 'text-cosmic-purple'
-                    : 'text-star-white/70 hover:text-star-white'
-                }`}
+                isActive={isActive('/bookings')}
               >
                 My Bookings
-              </Link>
+              </HeaderMenuItem>
             )}
-          </nav>
-
-          {/* User Section */}
-          <div className="flex items-center gap-4">
+          </HeaderNavigation>
+          <HeaderGlobalBar>
             {user ? (
-              <div className="flex items-center gap-3">
-                <div className="hidden md:flex items-center gap-2 text-sm">
-                  <User size={16} className="text-cosmic-purple" />
-                  <span className="text-star-white">{user.name}</span>
-                </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={logout}
-                  className="flex items-center gap-2"
+              <>
+                <HeaderGlobalAction
+                  aria-label={`Logged in as ${user.name}`}
+                  tooltipAlignment="end"
                 >
-                  <LogOut size={16} />
-                  <span className="hidden md:inline">Logout</span>
-                </Button>
-              </div>
+                  <User size={20} />
+                </HeaderGlobalAction>
+                <HeaderGlobalAction
+                  aria-label="Logout"
+                  onClick={logout}
+                  tooltipAlignment="end"
+                >
+                  <Logout size={20} />
+                </HeaderGlobalAction>
+              </>
             ) : (
-              <Link to="/flights">
-                <Button size="sm">Book a Flight</Button>
+              <Link to="/flights" style={{ textDecoration: 'none' }}>
+                <HeaderGlobalAction
+                  aria-label="Book a Flight"
+                  tooltipAlignment="end"
+                >
+                  <Rocket size={20} />
+                </HeaderGlobalAction>
               </Link>
             )}
-          </div>
-        </div>
-
-        {/* Mobile Navigation */}
-        <nav className="md:hidden flex items-center gap-4 mt-4 pt-4 border-t border-white/10">
-          <Link
-            to="/"
-            className={`text-sm font-medium transition-colors ${
-              isActive('/')
-                ? 'text-cosmic-purple'
-                : 'text-star-white/70 hover:text-star-white'
-            }`}
-          >
-            Home
-          </Link>
-          <Link
-            to="/flights"
-            className={`text-sm font-medium transition-colors ${
-              isActive('/flights')
-                ? 'text-cosmic-purple'
-                : 'text-star-white/70 hover:text-star-white'
-            }`}
-          >
-            Flights
-          </Link>
-          {user && (
-            <Link
-              to="/bookings"
-              className={`text-sm font-medium transition-colors ${
-                isActive('/bookings')
-                  ? 'text-cosmic-purple'
-                  : 'text-star-white/70 hover:text-star-white'
-              }`}
-            >
-              My Bookings
-            </Link>
-          )}
-        </nav>
-      </div>
-    </header>
+          </HeaderGlobalBar>
+        </CarbonHeader>
+      )}
+    />
   );
 };
 

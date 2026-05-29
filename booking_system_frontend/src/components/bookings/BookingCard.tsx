@@ -1,6 +1,6 @@
 import type { Booking, Flight } from '../../types';
 import { Card, Button } from '../common';
-import { Calendar, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Calendar, CheckCircle, XCircle, Clock, Baby } from 'lucide-react';
 import { formatDate, formatCurrency } from '../../utils/formatters';
 import { SEAT_CLASS_INFO, getSeatClassIcon } from '../../utils/seatClass';
 import { motion } from 'framer-motion';
@@ -102,6 +102,18 @@ export const BookingCard = ({ booking, flight, onCancel, isCancelling }: Booking
                 </p>
               </div>
             </div>
+
+            {booking.includes_infant && booking.infant_name && (
+              <div className="flex items-center gap-2 text-sm text-star-white/80">
+                <Baby size={16} className="text-cosmic-purple shrink-0" />
+                <span>
+                  Lap infant: <span className="font-medium text-star-white">{booking.infant_name}</span>
+                  {booking.infant_fee > 0 && (
+                    <span className="text-star-white/60"> (+{formatCurrency(booking.infant_fee)})</span>
+                  )}
+                </span>
+              </div>
+            )}
 
             <div className="flex items-center justify-between pt-3 border-t border-white/10">
               <span className="text-sm text-star-white/60">Price Paid</span>

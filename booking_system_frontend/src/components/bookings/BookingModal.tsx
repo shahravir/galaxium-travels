@@ -1,9 +1,19 @@
 import { useState } from 'react';
+import {
+  ComposedModal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Checkbox,
+  TextInput,
+  Stack,
+} from '@carbon/react';
+import { Calendar, Time, Currency, UserAvatar } from '@carbon/icons-react';
 import type { FlightWithClass } from '../../types';
-import { Modal, Button } from '../common';
-import { Calendar, Clock, DollarSign } from 'lucide-react';
+import { Button } from '../common';
 import { formatCurrency, formatDate, calculateDuration } from '../../utils/formatters';
 import { SEAT_CLASS_INFO, getSeatClassIcon } from '../../utils/seatClass';
+import { calculateTotalWithInfant } from '../../utils/pricing';
 import { bookFlight, isErrorResponse } from '../../services/api';
 import { useUser } from '../../hooks/useUser';
 import toast from 'react-hot-toast';
@@ -18,16 +28,24 @@ interface BookingModalProps {
 export const BookingModal = ({ isOpen, onClose, flightWithClass, onSuccess }: BookingModalProps) => {
   const { user } = useUser();
   const [isLoading, setIsLoading] = useState(false);
+  const [includesInfant, setIncludesInfant] = useState(false);
+  const [infantName, setInfantName] = useState('');
 
   if (!flightWithClass) return null;
 
   const { flight, seatClass, price } = flightWithClass;
   const classInfo = SEAT_CLASS_INFO[seatClass];
   const ClassIcon = getSeatClassIcon(seatClass);
+  const { adultFare, infantFee, total } = calculateTotalWithInfant(price, includesInfant);
 
   const handleConfirmBooking = async () => {
     if (!user) {
       toast.error('Please sign in to book a flight');
+      return;
+    }
+
+    if (includesInfant && !infantName.trim()) {
+      toast.error('Please enter the lap infant\'s name');
       return;
     }
 
@@ -39,6 +57,8 @@ export const BookingModal = ({ isOpen, onClose, flightWithClass, onSuccess }: Bo
         name: user.name,
         flight_id: flight.flight_id,
         seat_class: seatClass,
+        includes_infant: includesInfant,
+        infant_name: includesInfant ? infantName.trim() : undefined,
       });
 
       if (isErrorResponse(result)) {
@@ -46,7 +66,10 @@ export const BookingModal = ({ isOpen, onClose, flightWithClass, onSuccess }: Bo
         return;
       }
 
-      toast.success(`${classInfo.displayName} class booked successfully!`);
+      const infantNote = includesInfant ? ' (with lap infant)' : '';
+      toast.success(`${classInfo.displayName} class booked successfully${infantNote}!`);
+      setIncludesInfant(false);
+      setInfantName('');
       onSuccess();
       onClose();
     } catch (error: any) {
@@ -56,122 +79,169 @@ export const BookingModal = ({ isOpen, onClose, flightWithClass, onSuccess }: Bo
     }
   };
 
+  const handleClose = () => {
+    setIncludesInfant(false);
+    setInfantName('');
+    onClose();
+  };
+
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Confirm Your Booking"
+    <ComposedModal
+      open={isOpen}
+      onClose={handleClose}
       size="md"
     >
-      <div className="space-y-6">
-        {/* Class Badge - Prominent */}
-        <div className="flex items-center justify-center gap-3 p-4 rounded-lg bg-cosmic-gradient">
-          <ClassIcon className="text-white" size={32} />
-          <div>
-            <p className="text-white/70 text-sm">Selected Class</p>
-            <p className="text-white text-2xl font-bold">{classInfo.displayName}</p>
-          </div>
-        </div>
-
-        {/* Flight Summary */}
-        <div className="glass-card p-4 bg-white/5">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-cosmic-gradient">
-              <ClassIcon className="text-white" size={24} />
-            </div>
+      <ModalHeader title="Confirm Your Booking" />
+      <ModalBody>
+        <Stack gap={6}>
+          {/* Class Badge */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '1rem',
+            padding: '1rem',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: '0.5rem'
+          }}>
+            <ClassIcon size={32} />
             <div>
-              <h3 className="text-xl font-bold text-star-white">
-                {flight.origin} → {flight.destination}
-              </h3>
-              <p className="text-sm text-star-white/60">
-                Flight #{flight.flight_id} • {classInfo.displayName}
-              </p>
+              <p style={{ fontSize: '0.875rem', opacity: 0.8 }}>Selected Class</p>
+              <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{classInfo.displayName}</p>
             </div>
           </div>
 
-          <div className="space-y-3">
-            {/* Departure */}
-            <div className="flex items-start gap-3">
-              <Calendar className="text-cosmic-purple mt-1" size={20} />
-              <div>
-                <p className="text-xs text-star-white/60">Departure</p>
-                <p className="text-star-white font-medium">
-                  {formatDate(flight.departure_time)}
-                </p>
-              </div>
-            </div>
-
-            {/* Arrival */}
-            <div className="flex items-start gap-3">
-              <Calendar className="text-cosmic-purple mt-1" size={20} />
-              <div>
-                <p className="text-xs text-star-white/60">Arrival</p>
-                <p className="text-star-white font-medium">
-                  {formatDate(flight.arrival_time)}
-                </p>
-              </div>
-            </div>
-
-            {/* Duration */}
-            <div className="flex items-start gap-3">
-              <Clock className="text-cosmic-purple mt-1" size={20} />
-              <div>
-                <p className="text-xs text-star-white/60">Duration</p>
-                <p className="text-star-white font-medium">
-                  {calculateDuration(flight.departure_time, flight.arrival_time)}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Passenger Info */}
-        {user && (
-          <div className="glass-card p-4 bg-white/5">
-            <h4 className="text-sm font-semibold text-star-white mb-2">
-              Passenger Information
+          {/* Flight Summary */}
+          <div>
+            <h4 style={{ marginBottom: '0.75rem', fontWeight: 600 }}>
+              {flight.origin} → {flight.destination}
             </h4>
-            <p className="text-star-white">{user.name}</p>
-            <p className="text-star-white/60 text-sm">{user.email}</p>
+            <p style={{ fontSize: '0.875rem', opacity: 0.8, marginBottom: '1rem' }}>
+              Flight #{flight.flight_id} • {classInfo.displayName}
+            </p>
+
+            <Stack gap={4}>
+              <div style={{ display: 'flex', alignItems: 'start', gap: '0.75rem' }}>
+                <Calendar size={20} />
+                <div>
+                  <p style={{ fontSize: '0.75rem', opacity: 0.8 }}>Departure</p>
+                  <p style={{ fontWeight: 500 }}>{formatDate(flight.departure_time)}</p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'start', gap: '0.75rem' }}>
+                <Calendar size={20} />
+                <div>
+                  <p style={{ fontSize: '0.75rem', opacity: 0.8 }}>Arrival</p>
+                  <p style={{ fontWeight: 500 }}>{formatDate(flight.arrival_time)}</p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'start', gap: '0.75rem' }}>
+                <Time size={20} />
+                <div>
+                  <p style={{ fontSize: '0.75rem', opacity: 0.8 }}>Duration</p>
+                  <p style={{ fontWeight: 500 }}>
+                    {calculateDuration(flight.departure_time, flight.arrival_time)}
+                  </p>
+                </div>
+              </div>
+            </Stack>
           </div>
-        )}
 
-        {/* Price */}
-        <div className="flex items-center justify-between p-4 glass-card bg-cosmic-gradient">
-          <div className="flex items-center gap-2">
-            <DollarSign className="text-white" size={24} />
-            <span className="text-white font-semibold">Total Price</span>
+          {/* Passenger Info */}
+          {user && (
+            <div>
+              <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                Passenger Information
+              </h4>
+              <p>{user.name}</p>
+              <p style={{ fontSize: '0.875rem', opacity: 0.8 }}>{user.email}</p>
+            </div>
+          )}
+
+          {/* Lap infant */}
+          <div>
+            <Checkbox
+              id="includes-infant"
+              labelText={
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <UserAvatar size={20} />
+                  Traveling with a lap infant
+                </span>
+              }
+              checked={includesInfant}
+              onChange={(e) => {
+                setIncludesInfant(e.target.checked);
+                if (!e.target.checked) setInfantName('');
+              }}
+            />
+            <p style={{ fontSize: '0.75rem', opacity: 0.8, marginTop: '0.5rem' }}>
+              Lap infants do not use an extra seat. Infant fare is 10% of the {classInfo.displayName} seat price.
+            </p>
+            {includesInfant && (
+              <TextInput
+                id="infant-name"
+                labelText="Infant name"
+                placeholder="Infant's full name"
+                value={infantName}
+                onChange={(e) => setInfantName(e.target.value)}
+                style={{ marginTop: '1rem' }}
+              />
+            )}
           </div>
-          <span className="text-2xl font-bold text-white">
-            {formatCurrency(price)}
-          </span>
-        </div>
 
-        {/* Actions */}
-        <div className="flex gap-3">
-          <Button
-            variant="secondary"
-            onClick={onClose}
-            disabled={isLoading}
-            className="flex-1"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleConfirmBooking}
-            isLoading={isLoading}
-            className="flex-1"
-          >
-            Confirm Booking
-          </Button>
-        </div>
+          {/* Price breakdown */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+              <span>Adult fare ({classInfo.displayName})</span>
+              <span>{formatCurrency(adultFare)}</span>
+            </div>
+            {includesInfant && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <UserAvatar size={14} />
+                  Lap infant (10%)
+                </span>
+                <span>{formatCurrency(infantFee)}</span>
+              </div>
+            )}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: '0.75rem',
+              marginTop: '0.5rem',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              borderRadius: '0.5rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Currency size={20} />
+                <span style={{ fontWeight: 600 }}>Total</span>
+              </div>
+              <span style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{formatCurrency(total)}</span>
+            </div>
+          </div>
 
-        <p className="text-xs text-star-white/60 text-center">
-          By confirming, you agree to our terms and conditions
-        </p>
-      </div>
-    </Modal>
+          <p style={{ fontSize: '0.75rem', opacity: 0.8, textAlign: 'center' }}>
+            By confirming, you agree to our terms and conditions
+          </p>
+        </Stack>
+      </ModalBody>
+      <ModalFooter>
+        <Button
+          variant="secondary"
+          onClick={handleClose}
+          disabled={isLoading}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handleConfirmBooking}
+          isLoading={isLoading}
+        >
+          Confirm Booking
+        </Button>
+      </ModalFooter>
+    </ComposedModal>
   );
 };
-
-// Made with Bob

@@ -1,0 +1,117 @@
+/* Home Page Styles using Carbon Design Tokens */
+
+.home-page {
+  padding-top: var(--cds-spacing-09);
+  padding-bottom: var(--cds-spacing-09);
+}
+
+/* Hero Section */
+.home-hero {
+  text-align: center;
+  padding: var(--cds-spacing-13) 0;
+  margin-bottom: var(--cds-spacing-13);
+}
+
+.home-hero-title {
+  font-size: var(--cds-heading-06-font-size);
+  font-weight: var(--cds-heading-06-font-weight);
+  line-height: var(--cds-heading-06-line-height);
+  letter-spacing: var(--cds-heading-06-letter-spacing);
+  margin-bottom: var(--cds-spacing-06);
+}
+
+.home-hero-description {
+  font-size: var(--cds-body-long-02-font-size);
+  line-height: var(--cds-body-long-02-line-height);
+  letter-spacing: var(--cds-body-long-02-letter-spacing);
+  max-width: 42rem;
+  margin: 0 auto var(--cds-spacing-08);
+  color: var(--cds-text-secondary);
+}
+
+/* Features Section */
+.home-features {
+  margin-bottom: var(--cds-spacing-13);
+}
+
+.home-section-title {
+  font-size: var(--cds-heading-05-font-size);
+  font-weight: var(--cds-heading-05-font-weight);
+  line-height: var(--cds-heading-05-line-height);
+  letter-spacing: var(--cds-heading-05-letter-spacing);
+  text-align: center;
+  margin-bottom: var(--cds-spacing-09);
+}
+
+.home-feature-tile {
+  text-align: center;
+  height: 100%;
+  padding: var(--cds-spacing-07);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.home-feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  margin-bottom: var(--cds-spacing-05);
+}
+
+.home-feature-title {
+  font-size: var(--cds-heading-03-font-size);
+  font-weight: var(--cds-heading-03-font-weight);
+  line-height: var(--cds-heading-03-line-height);
+  letter-spacing: var(--cds-heading-03-letter-spacing);
+  margin-bottom: var(--cds-spacing-03);
+}
+
+.home-feature-description {
+  font-size: var(--cds-body-short-01-font-size);
+  line-height: var(--cds-body-short-01-line-height);
+  letter-spacing: var(--cds-body-short-01-letter-spacing);
+  color: var(--cds-text-secondary);
+}
+
+/* CTA Section */
+.home-cta {
+  padding: var(--cds-spacing-09);
+  text-align: center;
+}
+
+.home-cta-title {
+  font-size: var(--cds-heading-05-font-size);
+  font-weight: var(--cds-heading-05-font-weight);
+  line-height: var(--cds-heading-05-line-height);
+  letter-spacing: var(--cds-heading-05-letter-spacing);
+  margin-bottom: var(--cds-spacing-05);
+  color: var(--cds-text-on-color);
+}
+
+.home-cta-description {
+  font-size: var(--cds-body-long-02-font-size);
+  line-height: var(--cds-body-long-02-line-height);
+  letter-spacing: var(--cds-body-long-02-letter-spacing);
+  max-width: 42rem;
+  margin: 0 auto var(--cds-spacing-08);
+  color: var(--cds-text-on-color);
+  opacity: 0.95;
+}
+
+/* Responsive adjustments */
+@media (max-width: 672px) {
+  .home-hero-title {
+    font-size: var(--cds-heading-05-font-size);
+  }
+  
+  .home-section-title,
+  .home-cta-title {
+    font-size: var(--cds-heading-04-font-size);
+  }
+}
+
+/* Made with Bob */

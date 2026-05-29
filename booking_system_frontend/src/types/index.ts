@@ -26,6 +26,9 @@ export interface Booking {
   flight_id: number;
   seat_class: SeatClass;
   price_paid: number;
+  includes_infant: boolean;
+  infant_name?: string | null;
+  infant_fee: number;
   status: 'booked' | 'cancelled' | 'completed';
   booking_time: string;
 }
@@ -62,6 +65,8 @@ export interface BookingRequest {
   name: string;
   flight_id: number;
   seat_class: SeatClass;
+  includes_infant?: boolean;
+  infant_name?: string;
 }
 
 export interface UserRegistration {
